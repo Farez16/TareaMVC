@@ -16,12 +16,16 @@ public class Formulario extends javax.swing.JFrame {
     }
     private void inicializarTabla() {
     String[] columnas = {"Cedula","Nombre", "Curso", "Carrera", "Sexo","Correo"};
-    DefaultTableModel modelo = new DefaultTableModel(null, columnas);
-    TableReportes.setModel(modelo);
-    TablaEliminar1.setModel(modelo);
+    DefaultTableModel modeloReportes = new DefaultTableModel(null, columnas);
+    DefaultTableModel modeloEliminar = new DefaultTableModel(null,columnas);
+    TableReportes.setModel(modeloReportes);
+    TablaEliminar1.setModel(modeloEliminar);
 }
     public JTable getTableReportes() {
     return TableReportes;
+}
+    public JTable getTablaEliminar1() {
+    return TablaEliminar1;
 }
     public JTextField getTxtNombre() {
     return txtNombre;

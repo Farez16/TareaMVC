@@ -30,14 +30,13 @@ public class Controlador {
                 String sexo = formulario.getSelectedSexo();
                 String correo = formulario.getTxtCorreo().getText().trim();
 
-                if (validarCampos(cedula, nombre, curso, carrera, sexo, correo)) {
-                    return;
-                }
+                if (validarCampos(cedula, nombre, curso, carrera, sexo, correo)) return;
 
-                // Guardar en la base de datos directamente
                 if (modelo.guardarEstudiante(cedula, nombre, curso, carrera, sexo, correo)) {
                     limpiarCampos();
                     JOptionPane.showMessageDialog(formulario, "Datos guardados correctamente.");
+                    cargarEstudiantesEnTabla();
+                    cargarEstudiantesEnTablaEliminar();
                 } else {
                     JOptionPane.showMessageDialog(formulario, "Error al guardar los datos.");
                 }
@@ -50,12 +49,13 @@ public class Controlador {
         // Cambio de pestaña
         this.formulario.getTabPanel().addChangeListener(e -> {
             int index = formulario.getTabPanel().getSelectedIndex();
-            if (index == 1) { // Pestaña Reportes
+            if (index == 1) {
                 cargarEstudiantesEnTabla();
+                cargarEstudiantesEnTablaEliminar();
             }
         });
 
-        // === BOTÓN BUSCAR en PanelEditar ===
+        // Botón Buscar
         this.formulario.getBtnBuscar().addActionListener(e -> {
             String cedula = formulario.getTxtBuscar1().getText().trim();
             if (cedula.isEmpty()) {
@@ -79,7 +79,7 @@ public class Controlador {
             }
         });
 
-        // === BOTÓN EDITAR en PanelEditar ===
+        // Botón Editar
         this.formulario.getBtnEditar().addActionListener(e -> {
             String cedula = formulario.getTxtBuscar1().getText().trim();
             String nombre = formulario.getTxtNombre1().getText().trim();
@@ -105,12 +105,10 @@ public class Controlador {
                 JOptionPane.showMessageDialog(formulario, "Correo electrónico no válido.");
                 return;
             }
-
             if (!nombre.matches("[a-zA-ZÁÉÍÓÚáéíóúñÑ ]+")) {
                 JOptionPane.showMessageDialog(formulario, "El nombre solo debe contener letras.");
                 return;
             }
-
             if (!curso.matches("[a-zA-ZÁÉÍÓÚáéíóúñÑ ]+")) {
                 JOptionPane.showMessageDialog(formulario, "El curso solo debe contener letras.");
                 return;
@@ -120,12 +118,13 @@ public class Controlador {
                 JOptionPane.showMessageDialog(formulario, "Estudiante actualizado correctamente.");
                 formulario.limpiarCamposEditar();
                 cargarEstudiantesEnTabla();
+                cargarEstudiantesEnTablaEliminar();
             } else {
                 JOptionPane.showMessageDialog(formulario, "No se pudo actualizar el estudiante.");
             }
         });
 
-        // === BOTÓN ELIMINAR en PanelEditar ===
+        // Botón Eliminar
         this.formulario.getBtnEliminar().addActionListener(e -> {
             String cedula = formulario.getTxtBuscar1().getText().trim();
             if (cedula.isEmpty()) {
@@ -139,6 +138,7 @@ public class Controlador {
                     JOptionPane.showMessageDialog(formulario, "Estudiante eliminado correctamente.");
                     formulario.limpiarCamposEditar();
                     cargarEstudiantesEnTabla();
+                    cargarEstudiantesEnTablaEliminar();
                 } else {
                     JOptionPane.showMessageDialog(formulario, "No se encontró el estudiante.");
                 }
@@ -146,7 +146,8 @@ public class Controlador {
         });
     }
 
-    // Limpiar campos del formulario
+    // Métodos auxiliares
+
     private void limpiarCampos() {
         formulario.getTxtCedula().setText("");
         formulario.getTxtNombre().setText("");
@@ -156,7 +157,6 @@ public class Controlador {
         formulario.getTxtCorreo().setText("");
     }
 
-    // Validar los campos ingresados
     private boolean validarCampos(String cedula, String nombre, String curso, String carrera, String sexo, String correo) {
         if (cedula.isEmpty() || nombre.isEmpty() || curso.isEmpty() || correo.isEmpty()) {
             JOptionPane.showMessageDialog(formulario, "Todos los campos son obligatorios.");
@@ -166,7 +166,6 @@ public class Controlador {
             JOptionPane.showMessageDialog(formulario, "Por favor selecciona una carrera válida.");
             return true;
         }
-
         if (sexo.equals("No seleccionado")) {
             JOptionPane.showMessageDialog(formulario, "Por favor selecciona un sexo.");
             return true;
@@ -175,51 +174,39 @@ public class Controlador {
             JOptionPane.showMessageDialog(formulario, "La cédula ingresada no es válida.");
             return true;
         }
-
         if (modelo.cedulaExiste(cedula)) {
             JOptionPane.showMessageDialog(formulario, "La persona ya está registrada.");
             return true;
         }
-
         if (!nombre.matches("[a-zA-ZÁÉÍÓÚáéíóúñÑ ]+")) {
             JOptionPane.showMessageDialog(formulario, "El nombre solo debe contener letras.");
             return true;
         }
-
         if (!curso.matches("[a-zA-ZÁÉÍÓÚáéíóúñÑ ]+")) {
             JOptionPane.showMessageDialog(formulario, "El curso solo debe contener letras.");
             return true;
         }
-
         if (!correo.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")) {
             JOptionPane.showMessageDialog(formulario, "Correo electrónico no válido.");
             return true;
         }
-
         return false;
     }
 
-    // Validar cédula ecuatoriana
     private boolean cedulaValidaEcuatoriana(String cedula) {
-        if (cedula == null || !cedula.matches("\\d{10}")) {
-            return false;
-        }
+        if (cedula == null || !cedula.matches("\\d{10}")) return false;
 
         int provincia = Integer.parseInt(cedula.substring(0, 2));
         int tercerDigito = Integer.parseInt(cedula.substring(2, 3));
 
-        if (provincia < 1 || provincia > 24 || tercerDigito >= 6) {
-            return false;
-        }
+        if (provincia < 1 || provincia > 24 || tercerDigito >= 6) return false;
 
         int[] coef = {2, 1, 2, 1, 2, 1, 2, 1, 2};
         int suma = 0;
 
         for (int i = 0; i < 9; i++) {
             int num = Character.getNumericValue(cedula.charAt(i)) * coef[i];
-            if (num >= 10) {
-                num -= 9;
-            }
+            if (num >= 10) num -= 9;
             suma += num;
         }
 
@@ -227,10 +214,9 @@ public class Controlador {
         return digitoVerificador == Character.getNumericValue(cedula.charAt(9));
     }
 
-    // Cargar estudiantes desde la base de datos a la tabla
     public void cargarEstudiantesEnTabla() {
         DefaultTableModel modeloTabla = (DefaultTableModel) formulario.getTableReportes().getModel();
-        modeloTabla.setRowCount(0); // Limpiar la tabla
+        modeloTabla.setRowCount(0);
 
         ResultSet rs = modelo.obtenerEstudiantes();
         try {
@@ -247,6 +233,28 @@ public class Controlador {
             }
         } catch (SQLException e) {
             System.out.println("Error al cargar los estudiantes en la tabla: " + e.getMessage());
+        }
+    }
+
+    public void cargarEstudiantesEnTablaEliminar() {
+        DefaultTableModel modeloTabla = (DefaultTableModel) formulario.getTablaEliminar1().getModel();
+        modeloTabla.setRowCount(0);
+
+        ResultSet rs = modelo.obtenerEstudiantes();
+        try {
+            while (rs != null && rs.next()) {
+                Object[] fila = {
+                    rs.getString("cedula"),
+                    rs.getString("nombre"),
+                    rs.getString("curso"),
+                    rs.getString("carrera"),
+                    rs.getString("sexo"),
+                    rs.getString("correo")
+                };
+                modeloTabla.addRow(fila);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al cargar datos en TablaEliminar1: " + e.getMessage());
         }
     }
 }
